@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name" translatable="false">SkipRewardAd</string>
+    <string name="app_desc">Skip some reward videos and get the rewards directly</string>
+</resources>
