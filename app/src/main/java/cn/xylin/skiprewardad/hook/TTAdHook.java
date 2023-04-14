@@ -3,7 +3,6 @@ package cn.xylin.skiprewardad.hook;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
-import android.os.Message;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Collections;
@@ -14,8 +13,10 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class TTAdHook extends BaseHook {
-    private static final Set<String> clsSet = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private Method call, upload, reward, msg;
+    private int hash;
+    private Bundle fakeBundle;
+    private Method upload, listener;
+    private final Set<String> clsSet = Collections.newSetFromMap(new ConcurrentHashMap<>(6));
     
     public TTAdHook(Context ctx) {
         super(ctx);
@@ -24,9 +25,11 @@ public class TTAdHook extends BaseHook {
     @Override
     protected void runHook() throws Throwable {
         if (findClass("com.bytedance.sdk.openadsdk.TTRewardVideoAd") == null) {
-            //log("TTAd-无法找到找到TTRewardVideoAd！");
             return;
         }
+        fakeBundle = new Bundle();
+        fakeBundle.putBoolean("callback_extra_key_reward_valid", true);
+        fakeBundle.putBoolean("callback_extra_key_video_complete_reward", true);
         XposedHelpers.findAndHookMethod(ClassLoader.class, "loadClass", String.class, new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -36,6 +39,11 @@ public class TTAdHook extends BaseHook {
                     XposedBridge.hookAllMethods(clazz, "onStart", new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            int hashCode = param.thisObject.hashCode();
+                            if (hashCode == hash) {
+                                return;
+                            }
+                            hash = hashCode;
                             callReward(((Activity) param.thisObject));
                         }
                     });
@@ -48,58 +56,51 @@ public class TTAdHook extends BaseHook {
         try {
             claza = act.getClass();
             boolean isBase = false;
-            long curTime = System.currentTimeMillis();
-            int intValue = (int) (curTime / 1000);
-            if (call == null || upload == null || reward == null || msg == null) {
-                do {
+            do {
+                if (upload == null || listener == null) {
                     Method[] methods = claza.getDeclaredMethods();
                     for (Method method : methods) {
-                        Class<?>[] params = method.getParameterTypes();
-                        if (isBase) {
-                            if (msg == null && params.length == 1 && Message.class.isAssignableFrom(params[0])) {
-                                msg = method;
-                                msg.setAccessible(true);
-                                break;
-                            }
-                        } else if (call == null || reward == null || upload == null) {
-                            if (params.length == 1) {
-                                int mod = method.getModifiers();
-                                if (Modifier.isPrivate(mod) && int.class.isAssignableFrom(params[0])) {
+                        Class<?>[] cls = method.getParameterTypes();
+                        int mod = method.getModifiers();
+                        switch (cls.length) {
+                            case 1: {
+                                if (!isBase && Modifier.isPrivate(mod) && int.class.isAssignableFrom(cls[0])) {
                                     upload = method;
                                     upload.setAccessible(true);
-                                } else if (Modifier.isPublic(mod) && String.class.isAssignableFrom(params[0])) {
-                                    call = method;
                                 }
-                                continue;
+                                break;
                             }
-                            if (params.length == 2 && Bundle.class.isAssignableFrom(params[0]) && boolean.class.isAssignableFrom(
-                                    params[1])) {
-                                reward = method;
-                                reward.setAccessible(true);
+                            case 2: {
+                                if (!isBase && String.class.isAssignableFrom(cls[0]) && Bundle.class.isAssignableFrom(cls[1])) {
+                                    listener = method;
+                                    listener.setAccessible(true);
+                                }
+                                break;
                             }
                         }
                     }
-                    if (isBase) {
-                        break;
-                    }
-                    claza = claza.getSuperclass();
-                    isBase = claza != null && claza.getName().endsWith("TTBaseVideoActivity");
-                } while (claza != null);
+                }
+                if (isBase) {
+                    break;
+                }
+                claza = claza.getSuperclass();
+                isBase = claza != null && claza.getName().endsWith("TTBaseVideoActivity");
+            } while (claza != null);
+            if (listener != null) {
+                listener.invoke(act, "onAdShow", null);
+                if (upload != null) {
+                    upload.invoke(act, 0);
+                }
+                fakeBundle.putInt("callback_extra_key_reward_type", 0);
+                listener.invoke(act, "onRewardVerify", fakeBundle);
+                fakeBundle.putInt("callback_extra_key_reward_type", 1);
+                listener.invoke(act, "onRewardArrived", fakeBundle);
+                listener.invoke(act, "onVideoComplete", null);
+                listener.invoke(act, "onAdClose", null);
+                act.finish();
+                log("TTAd-发放奖励");
+                return true;
             }
-            if (upload != null) {
-                upload.invoke(act, intValue);
-                //log("调用--", upload.getName(), "--int方法成功");
-            }
-            if (reward != null) {
-                Bundle bundle = new Bundle();
-                bundle.putBoolean("callback_extra_key_reward_valid", true);
-                bundle.putInt("callback_extra_key_reward_type", 0);
-                reward.invoke(act, bundle, true);
-                //log("调用--", reward.getName(), "--Bundle,boolean方法成功");
-            }
-            act.finish();
-            log("TTAd-发放奖励");
-            return true;
         } catch (Throwable e) {
             log(e);
         }
