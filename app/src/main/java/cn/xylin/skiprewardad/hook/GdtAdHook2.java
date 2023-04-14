@@ -15,7 +15,6 @@ public class GdtAdHook2 extends BaseHook {
     protected void runHook() throws Throwable {
         claza = findClass("com.qq.e.ads.rewardvideo.RewardVideoAD");
         if (claza == null) {
-            //log("GDT2-RewardVideoAD为空！");
             return;
         }
         Field targetField = XposedHelpers.findFirstFieldByExactType(
@@ -23,12 +22,10 @@ public class GdtAdHook2 extends BaseHook {
                 findClass("com.qq.e.ads.rewardvideo.RewardVideoADListener")
         );
         if (targetField == null) {
-            //log("GDT2-RewardVideoADListener字段不存在！");
             return;
         }
         Object err = XposedHelpers.newInstance(findClass("com.qq.e.comm.util.AdError"));
         if (err == null) {
-            //log("GDT2-AdError实例化失败！");
             return;
         }
         XposedHelpers.findAndHookMethod(claza, "loadAD", new XC_MethodHook() {
@@ -37,7 +34,6 @@ public class GdtAdHook2 extends BaseHook {
                 //log("GDT2-进入loadAD");
                 Object adListener = XposedHelpers.getObjectField(param.thisObject, targetField.getName());
                 getHandler().post(() -> {
-                    log("GDT2-发放奖励");
                     //执行onADLoad通知APP广告已加载完成？？？车轮测试时不调用就会导致无法获得奖励
                     callMethod(adListener, "onADLoad");
                     //以下调用参考GdtAdHook1
@@ -45,6 +41,7 @@ public class GdtAdHook2 extends BaseHook {
                     callMethod(adListener, "onVideoComplete");
                     callMethod(adListener, "onADClose");
                     callMethod(adListener, "onError", err);
+                    log("GDT2-发放奖励");
                 });
                 param.setResult(null);
             }

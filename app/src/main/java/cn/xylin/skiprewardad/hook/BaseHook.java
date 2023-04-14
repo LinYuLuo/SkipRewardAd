@@ -3,13 +3,6 @@ package cn.xylin.skiprewardad.hook;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
-
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.HashSet;
-
-import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
@@ -26,7 +19,7 @@ public abstract class BaseHook {
                 runHook();
             }
         } catch (Throwable e) {
-            log("未捕捉的错误！", e.getMessage());
+            log(e.getMessage());
         }
     }
     
@@ -39,7 +32,7 @@ public abstract class BaseHook {
     }
     
     protected boolean isDebug() {
-        return true;
+        return false;
     }
     
     protected final boolean callMethod(Object target, String methodName, Object... params) {
@@ -75,72 +68,6 @@ public abstract class BaseHook {
             index++;
         }
         XposedBridge.log(buffer.toString());
-    }
-    
-    protected final void methodHook(Class<?> clazz, String methodName, boolean isReplace, final Object returnValue, Class<?>... params) {
-        if (claza == null) {
-            return;
-        }
-        Object[] paramsHook;
-        if (params == null || params.length == 0) {
-            paramsHook = new Object[1];
-        } else {
-            paramsHook = new Object[params.length + 1];
-        }
-        for (int index = 0; index < paramsHook.length; index++) {
-            if (index == (paramsHook.length - 1)) {
-                paramsHook[index] = isReplace ? new XC_MethodReplacement() {
-                    @Override
-                    protected Object replaceHookedMethod(MethodHookParam methodHookParam) {
-                        return returnValue;
-                    }
-                } : new XC_MethodHook() {
-                    @Override
-                    protected void beforeHookedMethod(MethodHookParam param) {
-                        param.setResult(returnValue);
-                    }
-                };
-                break;
-            }
-            paramsHook[index] = params[index];
-        }
-        XposedHelpers.findAndHookMethod(clazz, methodName, paramsHook);
-    }
-    
-    protected final void staticMethodHook(Class<?> clazz, String methodName, Object... hooks) {
-        if (hooks.length < 1) {
-            return;
-        }
-        if (!(hooks[hooks.length - 1] instanceof XC_MethodHook)) {
-            return;
-        }
-        try {
-            Class<?>[] params = new Class[hooks.length == 1 ? 0 : hooks.length - 1];
-            for (int i = 0; i < params.length; i++) {
-                params[i] = hooks[i].getClass();
-            }
-            Method method = clazz.getDeclaredMethod(methodName, params);
-            XposedBridge.hookMethod(method, (XC_MethodHook) hooks[hooks.length-1]);
-        } catch (NoSuchMethodException ignore) {
-        }
-    }
-    
-    protected final void staticMethodHook(Class<?> clazz, String methodName, boolean isReplace, final Object returnValue, Class<?>... params) {
-        try {
-            Method method = clazz.getDeclaredMethod(methodName, params);
-            XposedBridge.hookMethod(method, isReplace ? new XC_MethodReplacement() {
-                @Override
-                protected Object replaceHookedMethod(MethodHookParam methodHookParam) {
-                    return returnValue;
-                }
-            } : new XC_MethodHook() {
-                @Override
-                protected void beforeHookedMethod(MethodHookParam param) {
-                    param.setResult(returnValue);
-                }
-            });
-        } catch (NoSuchMethodException ignore) {
-        }
     }
     
     protected final Handler getHandler() {

@@ -4,11 +4,13 @@ import android.content.Context;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 
+/**
+ * 未测试是否有效
+ */
 public class FusionAdHook extends BaseHook {
     public FusionAdHook(Context ctx) {
         super(ctx);
     }
-    
     @Override
     protected void runHook() throws Throwable {
         claza = findClass("com.leyou.fusionsdk.FusionAdSDK");
@@ -26,8 +28,8 @@ public class FusionAdHook extends BaseHook {
                     if (!clazb.isInstance(obj)) {
                         continue;
                     }
-                    log("Fusion-发放奖励");
                     callMethod(obj, "onReward", "");
+                    log("Fusion-发放奖励");
                     param.setResult(null);
                     return;
                 }
