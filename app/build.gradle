@@ -8,8 +8,8 @@ android {
         applicationId "cn.xylin.skiprewardad"
         minSdk 21
         targetSdk 32
-        versionCode 3041502
-        versionName "1.1"
+        versionCode 3041623
+        versionName "1.2"
     }
     buildTypes {
         release {

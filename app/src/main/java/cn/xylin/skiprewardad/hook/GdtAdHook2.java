@@ -31,12 +31,9 @@ public class GdtAdHook2 extends BaseHook {
         XposedHelpers.findAndHookMethod(claza, "loadAD", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                //log("GDT2-进入loadAD");
                 Object adListener = XposedHelpers.getObjectField(param.thisObject, targetField.getName());
                 getHandler().post(() -> {
-                    //执行onADLoad通知APP广告已加载完成？？？车轮测试时不调用就会导致无法获得奖励
                     callMethod(adListener, "onADLoad");
-                    //以下调用参考GdtAdHook1
                     callMethod(adListener, "onReward", new HashMap<String, Object>());
                     callMethod(adListener, "onVideoComplete");
                     callMethod(adListener, "onADClose");

@@ -5,18 +5,17 @@ import android.content.Context;
 import android.os.Bundle;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Collections;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
 public class TTAdHook extends BaseHook {
+    private static final String BASE_ACT = "TTBaseVideoActivity";
+    private static final String REWARD_ACT_1 = "TTRewardVideoActivity";
+    private static final String REWARD_ACT_2 = "TTRewardVideoLandscapeActivity";
     private int hash;
     private Bundle fakeBundle;
     private Method upload, listener;
-    private final Set<String> clsSet = Collections.newSetFromMap(new ConcurrentHashMap<>(6));
     
     public TTAdHook(Context ctx) {
         super(ctx);
@@ -34,11 +33,15 @@ public class TTAdHook extends BaseHook {
             @Override
             protected void afterHookedMethod(MethodHookParam param) throws Throwable {
                 String clsName = (String) param.args[0];
-                if (clsName.endsWith("TTRewardVideoActivity")) {
+                if (clsName.endsWith(BASE_ACT)) {
                     Class<?> clazz = (Class<?>) param.getResult();
                     XposedBridge.hookAllMethods(clazz, "onStart", new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                            String clsName = param.thisObject.getClass().getName();
+                            if (!clsName.endsWith(REWARD_ACT_1) && !clsName.endsWith(REWARD_ACT_2)) {
+                                return;
+                            }
                             int hashCode = param.thisObject.hashCode();
                             if (hashCode == hash) {
                                 return;
@@ -54,38 +57,31 @@ public class TTAdHook extends BaseHook {
     
     private boolean callReward(Activity act) {
         try {
-            claza = act.getClass();
-            boolean isBase = false;
-            do {
-                if (upload == null || listener == null) {
-                    Method[] methods = claza.getDeclaredMethods();
-                    for (Method method : methods) {
-                        Class<?>[] cls = method.getParameterTypes();
-                        int mod = method.getModifiers();
-                        switch (cls.length) {
-                            case 1: {
-                                if (!isBase && Modifier.isPrivate(mod) && int.class.isAssignableFrom(cls[0])) {
-                                    upload = method;
-                                    upload.setAccessible(true);
-                                }
-                                break;
+            if (upload == null || listener == null) {
+                claza = act.getClass();
+                boolean isTarget = claza.getName().endsWith(REWARD_ACT_1);
+                do {
+                    if (isTarget) {
+                        Method[] methods = claza.getDeclaredMethods();
+                        for (Method method : methods) {
+                            if (!Modifier.isPrivate(method.getModifiers())) {
+                                continue;
                             }
-                            case 2: {
-                                if (!isBase && String.class.isAssignableFrom(cls[0]) && Bundle.class.isAssignableFrom(cls[1])) {
-                                    listener = method;
-                                    listener.setAccessible(true);
-                                }
-                                break;
+                            Class<?>[] cls = method.getParameterTypes();
+                            if (cls.length == 2 && String.class.isAssignableFrom(cls[0]) && Bundle.class.isAssignableFrom(cls[1])) {
+                                listener = method;
+                                listener.setAccessible(true);
+                            } else if (cls.length == 1 && int.class.isAssignableFrom(cls[0])) {
+                                upload = method;
+                                upload.setAccessible(true);
                             }
                         }
+                        break;
                     }
-                }
-                if (isBase) {
-                    break;
-                }
-                claza = claza.getSuperclass();
-                isBase = claza != null && claza.getName().endsWith("TTBaseVideoActivity");
-            } while (claza != null);
+                    claza = claza.getSuperclass();
+                    isTarget = claza != null && claza.getName().endsWith(REWARD_ACT_1);
+                } while (claza != null);
+            }
             if (listener != null) {
                 listener.invoke(act, "onAdShow", null);
                 if (upload != null) {
@@ -101,17 +97,8 @@ public class TTAdHook extends BaseHook {
                 log("TTAd-发放奖励");
                 return true;
             }
-        } catch (Throwable e) {
-            log(e);
+        } catch (Throwable ignore) {
         }
-        return false;
-    }
-    
-    private boolean isHooked(String className) {
-        if (clsSet.contains(className)) {
-            return true;
-        }
-        clsSet.add(className);
         return false;
     }
     

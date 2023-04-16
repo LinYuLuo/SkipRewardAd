@@ -16,14 +16,11 @@ public class FusionAdHook extends BaseHook {
         claza = findClass("com.leyou.fusionsdk.FusionAdSDK");
         clazb = findClass("com.leyou.fusionsdk.ads.rewardvideo.RewardVideoAdListener");
         if (claza == null || clazb == null) {
-            //log("Fusion-无法找到找到对应的类！", (claza == null ? "FusionAdSDK为空！" : "RewardVideoAdListener为空！"));
             return;
         }
-        log("进入FusionAdHook");
         XposedBridge.hookAllMethods(claza, "loadRewardVideoAd", new XC_MethodHook() {
             @Override
             protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
-                log("Fusion-进入loadRewardVideoAd");
                 for (Object obj : param.args) {
                     if (!clazb.isInstance(obj)) {
                         continue;

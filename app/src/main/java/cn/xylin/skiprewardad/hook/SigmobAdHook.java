@@ -35,7 +35,7 @@ public class SigmobAdHook extends BaseHook {
                 callMethod(param.thisObject, "onVideoAdPlayComplete", rewardInfo, adId);
                 callMethod(param.thisObject, "onVideoAdPlayEnd", adId);
                 callMethod(param.thisObject, "onVideoAdClosed", adId);
-                log("Sigmob-发放奖励");
+                log("SigmobAd-发放奖励");
                 param.setResult(true);
             }
         });
