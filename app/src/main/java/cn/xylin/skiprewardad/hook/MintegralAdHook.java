@@ -16,7 +16,6 @@ import de.robv.android.xposed.XposedHelpers;
 public class MintegralAdHook extends BaseHook {
     private Object fakeReward, tempListener, tempParam;
     private XC_MethodHook setListenerHook, callbackHook;
-    private final Set<String> clsSet = Collections.newSetFromMap(new ConcurrentHashMap<>(6));
     public MintegralAdHook(Context ctx) {
         super(ctx);
     }
@@ -76,13 +75,6 @@ public class MintegralAdHook extends BaseHook {
         XposedBridge.hookAllMethods(clazz, "setRewardVideoListener", setListenerHook);
     }
     
-    private boolean isHooked(String className) {
-        if (clsSet.contains(className)) {
-            return true;
-        }
-        clsSet.add(className);
-        return false;
-    }
     @Override
     protected boolean isTarget() {
         return true;

@@ -2,15 +2,20 @@ package cn.xylin.skiprewardad;
 
 import android.app.Application;
 import android.content.Context;
+
+import cn.xylin.skiprewardad.hook.ApplovinAdHook;
 import cn.xylin.skiprewardad.hook.BaiduAdHook;
 import cn.xylin.skiprewardad.hook.FusionAdHook;
 import cn.xylin.skiprewardad.hook.GdtAdHook1;
 import cn.xylin.skiprewardad.hook.GdtAdHook2;
+import cn.xylin.skiprewardad.hook.GoogleAdHook1;
 import cn.xylin.skiprewardad.hook.KsAdHook;
 import cn.xylin.skiprewardad.hook.MintegralAdHook;
 import cn.xylin.skiprewardad.hook.SigmobAdHook;
 import cn.xylin.skiprewardad.hook.TTAdHook;
-import cn.xylin.skiprewardad.hook.UnityAdHook;
+import cn.xylin.skiprewardad.hook.UnityAdHook1;
+import cn.xylin.skiprewardad.hook.UnityAdHook2;
+import cn.xylin.skiprewardad.hook.VungleAdHook;
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
@@ -43,7 +48,11 @@ public class Start implements IXposedHookLoadPackage {
         new BaiduAdHook(baseContext);
         new SigmobAdHook(baseContext);
         new MintegralAdHook(baseContext);
-        new UnityAdHook(baseContext);
+        new UnityAdHook1(baseContext);
+        new UnityAdHook2(baseContext);
         new KsAdHook(baseContext);
+        new VungleAdHook(baseContext);
+        new GoogleAdHook1(baseContext);
+        new ApplovinAdHook(baseContext);
     }
 }

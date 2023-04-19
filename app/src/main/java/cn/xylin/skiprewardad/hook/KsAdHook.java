@@ -13,7 +13,6 @@ import de.robv.android.xposed.XposedHelpers;
  * 未测试是否有效
  */
 public class KsAdHook extends BaseHook {
-    private final Set<String> clsSet = Collections.newSetFromMap(new ConcurrentHashMap<>(6));
     private XC_MethodHook showRewardHook;
     private Object listener;
     private Class<?> clazc;
@@ -94,14 +93,6 @@ public class KsAdHook extends BaseHook {
                 });
             }
         });
-    }
-    
-    private boolean isHooked(String className) {
-        if (clsSet.contains(className)) {
-            return true;
-        }
-        clsSet.add(className);
-        return false;
     }
     
     @Override

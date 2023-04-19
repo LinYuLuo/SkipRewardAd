@@ -3,6 +3,9 @@ package cn.xylin.skiprewardad.hook;
 import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 
@@ -11,6 +14,7 @@ public abstract class BaseHook {
     protected Class<?> claza, clazb;
     private StringBuffer buffer;
     private Handler handler;
+    private Set<String> clsSet;
     
     public BaseHook(Context ctx) {
         context = ctx;
@@ -32,6 +36,16 @@ public abstract class BaseHook {
     }
     
     protected boolean isDebug() {
+        return false;
+    }
+    
+    protected final boolean isHooked(String clsName) {
+        if (clsSet == null) {
+            clsSet = Collections.newSetFromMap(new ConcurrentHashMap<>(6));
+        } else if (clsSet.contains(clsName)) {
+            return true;
+        }
+        clsSet.add(clsName);
         return false;
     }
     

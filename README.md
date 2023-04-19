@@ -3,7 +3,7 @@
 
 有一定概率直接跳过激励视频并获取奖励（Skip some reward videos and get the rewards directly）
 
-可能会对这些广告生效：百度、穿山甲、广点通、快手、Fusion、Mintegral、Sigmob、Unity
+可能会对这些广告生效：百度、穿山甲、广点通、快手、Applovin、Fusion、Google、Mintegral、Sigmob、Unity、Vungle
 
 [爱发电 (Afdian)](https://afdian.net/a/LinYuLuo)
 
